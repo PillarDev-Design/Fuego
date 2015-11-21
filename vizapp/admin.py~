@@ -4,8 +4,7 @@ from .models import Visualization
 class VisualizationAdmin( admin.ModelAdmin ):
 	fieldsets = [
 		( None, { 'fields': ['vis_name'] } ),
-		( 'Short Description', { 'fields': ['short_description' ] } ),
-		( 'Description', { 'fields': ['description' ] } ),
+		( 'Description', { 'fields': ['short_description' ] } ),
 		( 'Date Published', { 'fields': ['pub_date'],
 				      'classes': ['collapse'] } ),
 		( 'Last Edited', { 'fields': ['last_edit'],
