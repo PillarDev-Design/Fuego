@@ -19,5 +19,6 @@ class Visualization( models.Model ):
 	pub_date  = models.DateTimeField( 'date published' )
 	last_edit = models.DateTimeField( 'last edited' )
 
+
 	def __unicode__( self ):
 		return self.vis_name

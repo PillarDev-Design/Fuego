@@ -26,7 +26,6 @@ def about( request ):
 
 def usa_natality_2013( request ):
 	vis = Visualization.objects.all().filter(template_slug="usa_natality_2013");
-	print vis
 	context = { 'vis': vis }
 	return render( request, 'vizapp/usa_natality_2013.html', context )
 

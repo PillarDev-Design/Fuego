@@ -1,0 +1,12 @@
+{% extends 'vizapp/base.html' %}
+{% block content %}
+
+<script>
+$(document).ready( function(){
+	$("#nav_about").addClass( "nav_selected" );
+	$("#nav_home").click( function() { window.location.href = "/"; });
+	$("#nav_datasets").click( function() { window.location.href = "/datasets/"; });
+});
+</script>
+
+{% endblock content %}

@@ -8,7 +8,7 @@
 			Latest Datasets
 		</div>
 		{% for vis in latest_vis_list %}
-			<div id='{{vis.template_slug}}_container' class='index_latest_container'>
+		<div id='{{vis.template_slug}}_container' class='index_latest_container'>
 				<div class='index_latest_name'>{{vis.vis_name}}</div>
 				<hr style='width: 80%' />
 				<div class='index_latest_descrip_title'>Short Description:</div>

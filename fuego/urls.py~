@@ -23,10 +23,9 @@ urlpatterns = [
 	url( r'^$', index, name='index' ),
 	url( r'^datasets/$', datasets, name='datasets' ),
 	url( r'^about/$', about, name='about' ),
-
 	# DATA SETS
 	url( r'^datasets/usa_natality_2013/$', usa_natality_2013, name='usa_natality_2013' ),
-	url( r'^datasets/usa_natality_2012/$', usa_natality_2012, name='usa_natality_2012' ),
+	url( r'^datasets/usa_natality_2013/$', usa_natality_2013, name='usa_natality_2013' ),
 
 	# ADMIN
 	url( r'^admin/', include( admin.site.urls ) ),

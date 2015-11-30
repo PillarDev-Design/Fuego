@@ -16,7 +16,6 @@ class VisualizationAdmin( admin.ModelAdmin ):
 		   'pub_date',
 		   'last_edit',
 		 ]
-	list_display = ( 'vis_name', 'short_description', )
 
 
 admin.site.register( Visualization, VisualizationAdmin )
