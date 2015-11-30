@@ -21,6 +21,19 @@
 </div>
 <div class='vis_right_side'>
 	<div id='visualization'></div>
+	<div id='vis_data_container'>
+		<div class='vis_data_left_side'>
+			<div id='vis_data_left_title'>
+				Click a state on the map<br />
+				Or interact with the chart
+			</div>
+			<div id='vis_data_dynamic'></div>
+		</div>
+		<div class='vis_data_right_side'>
+			<div id='donut_vis'></div>
+		</div>
+		<div class='clear'></div>
+	</div>
 </div>
 <div class='clear'></div>
 
@@ -101,7 +114,8 @@ $(document).ready( function(){
 	var svg = d3.select( "#visualization" )
 		  .append( "svg" )
 		  .attr( "width", width )
-		  .attr( "height", height );
+		  .attr( "height", height )
+		  .attr( "border-radius", "35px" );
 
 	svg.append( "rect" )
 		.attr( "class", "d3_background" )
@@ -120,6 +134,9 @@ $(document).ready( function(){
 			.domain( [ 5975, 494705 ] )
 			.range( ['#496D89', '#042037' ] );
 
+	var d_color = d3.scale.ordinal()
+		    .range(["#BFC2BC", "#83897A", "353B2A"] );
+
 	d3.json( "/static/vizapp/us.json", function( error, us ){
 	d3.json( "/static/vizapp/natality_2013.json", function( nat ){
 		//if( error ) throw error;
@@ -133,14 +150,6 @@ $(document).ready( function(){
 				for( i = 0; i < nat.numbers.length; ++i )
 					if( nat.numbers[i].state === state_draw[ color_counter ] )
 					{
-						/*
-						return_val = color( nat.numbers[i].births );
-						console.log( "Colored: " + state_draw[ color_counter ]
-							+ " | Val: " + nat.numbers[i].births
-							+ " | Clr: " + color( nat.numbers[i].births )
-							+ " | r_val: " + return_val
-							 );
-						*/
 						color_counter = color_counter + 1;
 						return color( nat.numbers[i].births );
 					}
@@ -161,7 +170,18 @@ $(document).ready( function(){
 	});
 
 	function clicked(d){
-		if( active.node() === this ) return reset();
+
+		if( active.node() === this )
+		{
+			$("#donut_vis").html("");
+			$("#vis_data_dynamic").html( "" );
+			draw_DONUT();
+			return reset();
+		}
+
+		$("#donut_vis").html( "" );
+		draw_AGE_DONUT( this.id );
+
 		active.classed( "active", false );
 		active = d3.select(this).classed("active", true);
 
@@ -187,6 +207,405 @@ $(document).ready( function(){
 			.duration(750)
 			.style( "stroke-width", "1.5px" )
 			.attr( "transform", "" );
+	}
+
+	var donut_width = 480,
+	    donut_height = 500;
+
+	var donut_outerRadius = donut_height / 2 - 20,
+	    donut_innerRadius = donut_outerRadius / 3,
+	    donut_cornerRadius = 10;
+	
+	var pie = d3.layout.pie()
+		  .padAngle(.02);
+	var arc = d3.svg.arc()
+		  .padRadius( donut_outerRadius )
+		  .innerRadius( donut_innerRadius );
+
+
+	function draw_DONUT()
+	{
+		var donut_svg = d3.select("#donut_vis")
+			.append( "svg" )
+			.attr( "width", donut_width )
+			.attr( "height", donut_height )
+			.append( "g" )
+			.attr( "transform", "translate(" + donut_width / 2 + "," + donut_height / 2 + ")" );
+
+		d3.json( "/static/vizapp/natality_2013.json", function( nat ){
+			var pie_data = [];
+			for( i = 0; i < nat.numbers.length; ++i )
+				pie_data.push( nat.numbers[i].births );
+		
+			donut_svg.selectAll( "path" )
+				.data( pie( pie_data ) )
+				.enter().append( "path" )
+				.attr( "class", "d3_donut_path" )
+				.style( "fill", function(d) {
+
+					var return_val = "#FEFEFE";
+					for( i = 0; i < nat.numbers.length; ++i )
+						if( nat.numbers[i].births === d.data )
+							return color( nat.numbers[i].births );
+
+					return return_val;
+					})
+				.each( function(d) { d.outerRadius = donut_outerRadius - 20; } )
+				.attr( "d", arc )
+				.on( "mouseover", arcTween( donut_outerRadius, 0 ) )
+				.on( "mouseout",  arcTweenClose( donut_outerRadius - 20, 150 ) );
+		});
+	}
+	draw_DONUT();
+	function draw_AGE_DONUT( state )
+	{
+		var donut_svg = d3.select( "#donut_vis" )
+			.append( "svg" )
+			.attr( "width", donut_width )
+			.attr( "height", donut_height )
+			.append( "g" )
+			.attr( "transform", "translate(" + donut_width / 2 + "," + donut_height / 2 + ")" );
+
+		d3.json( "/static/vizapp/natality_2013.json", function( nat ){
+			var pie_data = [];
+			for( i = 0; i < nat.numbers.length; ++i )
+				if( nat.numbers[i].state === state )
+				{
+					pie_data.push( nat.numbers[i]._0_15 );
+					pie_data.push( nat.numbers[i]._15_19 );
+					pie_data.push( nat.numbers[i]._20_24 );
+					pie_data.push( nat.numbers[i]._25_29 );
+					pie_data.push( nat.numbers[i]._30_34 );
+					pie_data.push( nat.numbers[i]._35_39 );
+					pie_data.push( nat.numbers[i]._40_44 );
+					pie_data.push( nat.numbers[i]._45_49 );
+					pie_data.push( nat.numbers[i]._50_54 );
+
+					populateAgeData( nat.numbers[i].state,
+							 nat.numbers[i].births,
+							 nat.numbers[i]._0_15, false,
+							 nat.numbers[i]._15_19, false,
+							 nat.numbers[i]._20_24, false,
+							 nat.numbers[i]._25_29, false,
+							 nat.numbers[i]._30_34, false,
+							 nat.numbers[i]._35_39, false,
+							 nat.numbers[i]._40_44, false,
+							 nat.numbers[i]._45_49, false,
+							 nat.numbers[i]._50_54, false );
+					break;
+				}
+			donut_svg.selectAll( "path" )
+				.data( pie( pie_data ) )
+				.enter().append("path")
+				.attr( "class", "d3_donut_path" )
+				.style( "fill", function(d) { return d_color( d.data ); })
+				.each( function(d) { d.outerRadius = donut_outerRadius - 20; } )
+				.attr( "d", arc )
+				.on( "mouseover", age_arcTween( donut_outerRadius, 0, state ) )
+				.on( "mouseout", age_arcTweenClose( donut_outerRadius - 20, 150, state ) );
+					
+		});
+	}
+
+	function age_arcTweenClose( outerRadius, delay, state )
+	{
+		return function(a){
+			d3.json( "/static/vizapp/natality_2013.json", function( in_nat ){
+				for( j = 0; j < in_nat.numbers.length; ++j )
+					if( in_nat.numbers[j].state === state )
+					{
+						populateAgeData( in_nat.numbers[j].state,
+								 in_nat.numbers[j].births,
+								 in_nat.numbers[j]._0_15, false,
+								 in_nat.numbers[j]._15_19, false,
+								 in_nat.numbers[j]._20_24, false,
+								 in_nat.numbers[j]._25_29, false,
+								 in_nat.numbers[j]._30_34, false,
+								 in_nat.numbers[j]._35_39, false,
+								 in_nat.numbers[j]._40_44, false,
+								 in_nat.numbers[j]._45_49, false,
+								 in_nat.numbers[j]._50_54, false );
+						break;
+					}
+			});
+			d3.select(this)
+				.transition()
+				.delay( delay )
+				.attrTween( "d", function(d) {
+					var i = d3.interpolate( d.outerRadius, outerRadius );
+					return function(t) {
+						d.outerRadius = i(t);
+						return arc(d);
+					};
+				});
+		};
+	}
+	function arcTweenClose( outerRadius, delay )
+	{
+		return function(){
+			$("#vis_data_dynamic").html( "" );
+			d3.select(this)
+				.transition()
+				.delay( delay )
+				.attrTween( "d", function(d) {
+					var i = d3.interpolate( d.outerRadius, outerRadius );
+					return function(t){
+						d.outerRadius = i(t);
+						return arc(d);
+					};
+				});
+
+		};
+	}
+	function arcTween( outerRadius, delay )
+	{
+	
+		return function( a ){
+			/* */
+			d3.json( "/static/vizapp/natality_2013.json", function( in_nat ){
+				for( j = 0; j < in_nat.numbers.length; ++j )
+					if( in_nat.numbers[j].births === a.data )
+					{
+						populateData( in_nat.numbers[j].state, in_nat.numbers[j].births );
+						break;
+					}
+			});
+			/* */
+			d3.select(this)
+				.transition()
+				.delay( delay )
+				.attrTween( "d", function(d) {
+					var i = d3.interpolate( d.outerRadius, outerRadius );
+					return function(t){
+						d.outerRadius = i(t);
+						return arc(d);
+					};
+				});
+		};
+	}
+	function age_arcTween( outerRadius, delay, state )
+	{
+		return function( a ){
+			d3.json( "/static/vizapp/natality_2013.json", function( in_nat ){
+				for( j = 0; j < in_nat.numbers.length; ++j )
+					if( in_nat.numbers[j].state === state )
+					{
+						if( a.data === in_nat.numbers[j]._0_15 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, true,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._15_19 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, true,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._20_24 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, true,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._25_29 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, true,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._30_34 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, true,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._35_39 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, true,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._40_44 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, true,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, false );
+						else if( a.data === in_nat.numbers[j]._45_49 )
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, true,
+									 in_nat.numbers[j]._50_54, false );
+						else
+							populateAgeData( in_nat.numbers[j].state,
+									 in_nat.numbers[j].births,
+									 in_nat.numbers[j]._0_15, false,
+									 in_nat.numbers[j]._15_19, false,
+									 in_nat.numbers[j]._20_24, false,
+									 in_nat.numbers[j]._25_29, false,
+									 in_nat.numbers[j]._30_34, false,
+									 in_nat.numbers[j]._35_39, false,
+									 in_nat.numbers[j]._40_44, false,
+									 in_nat.numbers[j]._45_49, false,
+									 in_nat.numbers[j]._50_54, true );
+						break;
+					}
+			});
+			d3.select(this)
+				.transition()
+				.delay( delay )
+				.attrTween( "d", function(d) {
+					var i = d3.interpolate( d.outerRadius, outerRadius );
+					return function(t){
+						d.outerRadius = i(t);
+						return arc(d);
+					};
+				});
+		};
+	}
+
+	function populateAgeData( state, births, _0_15, _0_15f,
+						 _15_19, _15_19f,
+						 _20_24, _20_24f,
+						 _25_29, _25_29f,
+						 _30_34, _30_34f,
+						 _35_39, _35_39f,
+						 _40_44, _40_44f,
+						 _45_49, _45_49f,
+						 _50_54, _50_54f )
+	{
+		var populate = "";
+		
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>State:</div><div class='dynamic_content'>" +
+			      state + "</div><div class='clear'></div></div>" +
+			      "<div class='dynamic_container'><div class='dynamic_title'>Births:</div><div class='dynamic_content'>" +
+			      births + "</div><div class='clear'></div></div>"  );
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[0 -> 15]:</div><div class='dynamic_content'>" );
+		if( _0_15f === true )
+			populate += "<strong>" + _0_15 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _0_15 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[15 -> 19]:</div><div class='dynamic_content'>" );
+		if( _15_19f === true )
+			populate += "<strong>" + _15_19 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _15_19 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[20 -> 24]:</div><div class='dynamic_content'>" );
+		if( _20_24f === true )
+			populate += "<strong>" + _20_24 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _20_24 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[25 -> 29]:</div><div class='dynamic_content'>" );
+		if( _25_29f === true )
+			populate += "<strong>" + _25_29 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _25_29 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[30 -> 34]:</div><div class='dynamic_content'>" );
+		if( _30_34f === true )
+			populate += "<strong>" + _30_34 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _30_34 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[35 -> 39]:</div><div class='dynamic_content'>" );
+		if( _35_39f === true )
+			populate += "<strong>" + _35_39 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _35_39 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[40 -> 44]:</div><div class='dynamic_content'>" );
+		if( _40_44f === true )
+			populate += "<strong>" + _40_44 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _40_44 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[45 -> 49]:</div><div class='dynamic_content'>" );
+		if( _45_49f === true )
+			populate += "<strong>" + _45_49 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _45_49 + "</div><div class='clear'></div></div>";
+
+		populate += ( "<div class='dynamic_container'><div class='dynamic_title'>[50 -> 54]:</div><div class='dynamic_content'>" );
+		if( _50_54f === true )
+			populate += "<strong>" + _50_54 + "</strong></div><div class='clear'></div></div>";
+		else
+			populate += _50_54 + "</div><div class='clear'></div></div>";
+
+		$("#vis_data_dynamic").html( populate );
+	}
+	function populateData( state, births )
+	{
+		var populate = "";
+
+		populate += ( "<div class='dynamic_containerL'>" +
+			       "<div class='dynamic_titleL'>State:</div>" +
+			       "<div class='dynamic_contentL'>" +
+			       state +
+			       "</div><div class='clear'></div>" +
+			       "</div>" );
+
+		populate += ( "<div class='dynamic_containerL'>" +
+			      "<div class='dynamic_titleL'>Births:</div>" +
+			      "<div class='dynamic_contentL'>" + births );
+
+
+		populate += ( "</div><div class='clear'></div></div>" );
+
+		$("#vis_data_dynamic").html( populate );
 	}
 });
 </script>
