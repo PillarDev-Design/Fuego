@@ -333,7 +333,13 @@ body, html{
 	width: 74%;
 	margin: 2em;
 }
-	#index_content_container
+	#visualization
 	{
+		width: 90%;
+		border: 5px solid black;
+		margin-left: 5%;
+		position: relative;
+		margin-top: 2em;
+		border-radius: 35px;
 	}
 /* index.html --------------------------------------------------------------- */

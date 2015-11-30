@@ -32,6 +32,60 @@ $(document).ready( function(){
 	$("#nav_about").click( function() { window.location.href = "/about/"; });
 
 	/* D3 SHIT */
+	var state_draw = [
+		"Washington",
+		"Montana",
+		"Idaho",
+		"North Dakota",
+		"Minnesota",
+		"Maine",
+		"Michigan",
+		"Wisconsin",
+		"Oregon",
+		"South Dakota",
+		"New Hampshire",
+		"Vermont",
+		"New York",
+		"Wyoming",
+		"Iowa",
+		"Nebraska",
+		"Massachusetts",
+		"Illinois",
+		"Pennsylvania",
+		"Connecticut",
+		"Rhode Island",
+		"California",
+		"Utah",
+		"Nevada",
+		"Ohio",
+		"Indiana",
+		"New Jersey",
+		"Colorado",
+		"West Virginia",
+		"Missouri",
+		"Kansas",
+		"Delaware",
+		"Maryland",
+		"Virginia",
+		"Kentucky",
+		"Washington, D.C.",
+		"Arizona",
+		"Oklahoma",
+		"New Mexico",
+		"Tennessee",
+		"North Carolina",
+		"Texas",
+		"Arkansas",
+		"South Carolina",
+		"Alabama",
+		"Georgia",
+		"Mississippi",
+		"Louisiana",
+		"Florida",
+		"Hawaii",
+		"Alaska"
+		];
+
 	var width  = 960,
 	    height = 500,
 	    active = d3.select(null);
@@ -59,24 +113,51 @@ $(document).ready( function(){
 		.style( "stroke-width", "1.5px" );
 
 	var counter = 0;
+	var color_counter = 0;
+
+	var color = d3.scale
+			.linear()
+			.domain( [ 5975, 494705 ] )
+			.range( ['#496D89', '#042037' ] );
 
 	d3.json( "/static/vizapp/us.json", function( error, us ){
-		if( error ) throw error;
+	d3.json( "/static/vizapp/natality_2013.json", function( nat ){
+		//if( error ) throw error;
 	
 		g.selectAll( "path" )
 			.data( topojson.feature( us, us.objects.states).features )
 			.enter().append("path")
 			.attr("d", path )
-			.attr("class", "d3_feature")
+			.style( "fill", function(d) {
+				var return_val = "#FEFEFE";
+				for( i = 0; i < nat.numbers.length; ++i )
+					if( nat.numbers[i].state === state_draw[ color_counter ] )
+					{
+						/*
+						return_val = color( nat.numbers[i].births );
+						console.log( "Colored: " + state_draw[ color_counter ]
+							+ " | Val: " + nat.numbers[i].births
+							+ " | Clr: " + color( nat.numbers[i].births )
+							+ " | r_val: " + return_val
+							 );
+						*/
+						color_counter = color_counter + 1;
+						return color( nat.numbers[i].births );
+					}
+
+				return return_val;
+				})
 			.attr( "id", function(d) {
+				var return_val = state_draw[ counter ];
 				counter = counter + 1;
-				return ( "state_" + counter );
+				return return_val;
 				})
 			.on("click", clicked);
 		g.append("path")
 			.datum( topojson.mesh( us, us.objects.states, function(a,b){ return a !== b; } ))
 			.attr( "class", "d3_mesh" )
 			.attr("d", path );
+	});
 	});
 
 	function clicked(d){
