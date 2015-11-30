@@ -92,15 +92,22 @@ $(document).ready( function(){
 			.attr( "d", path )
 			.style( "fill", function(d) {
 				var return_val = "FFF";
+				console.log( us );
+				//console.log( us.features.properties.name );
 				for( var i = 0; i < nat.numbers.length; ++i )
-					if( us.properties.name === nat.numbers[i].state )
+				{
+					/*
+					if( us === nat.numbers[i].state )
 						return_val = color( nat.numbers[i].births );
+					*/
+				}
 				return return_val;
 						
 			})
 			.on( "click", clicked );
 		g.append( "path" )
-			.datum( topojson.mesh( us, us.objects.states, function(a,b){ return a !== b; } ) )
+			/*.datum( topojson.mesh( us, us.objects.states, function(a,b){ return a !== b; } ) )*/
+			
 			.attr( "class", "d3_mesh" )
 			.attr( "d", path );
 	});
